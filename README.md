@@ -1,4 +1,4 @@
-# json-storage-formater
+# json-storage-formatter
 
 Package for json stringify objects without losing data types. The transformation of the data includes extra metadata into the resulted string which later on is used to restored all the data structures to the their origninal forms.
 
