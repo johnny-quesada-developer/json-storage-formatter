@@ -1,4 +1,4 @@
-# json-storage-formater
+# json-storage-formatter
 
 Package for json stringify objects without losing data types. The transformation of the data includes extra metadata into the resulted string which later on is used to restored all the data structures to the their origninal forms.
 
@@ -56,7 +56,7 @@ Format an object to be stored as JSON
 
 ## formatFromStore
 
-Format an value with possible metadata to his original form, it also supports Map, Set, Arrays
+Format a value with possible metadata to his original form, it also supports Map, Set, Arrays
 
 ```TS
     const object = formatFromStore(objectWithMetadata);
