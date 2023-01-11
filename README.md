@@ -13,44 +13,44 @@ The main methods of the library are **formatToStore** and **formatFromStore**
 Format an object to be stored as JSON
 
 ```TS
-    const objectWithMetadata = formatToStore(object);
+const objectWithMetadata = formatToStore(object);
 
-    // The result can be JSON.stringify
-    console.log(objectWithMetadata);
-    /*
-    {
-        _type_: 'map',
-        value: [
-            [
-            'key1',
+// The result can be JSON.stringify
+console.log(objectWithMetadata);
+/*
+{
+    _type_: 'map',
+    value: [
+        [
+        'key1',
+        {
+            _type_: 'date',
+            value: '2021-05-08T13:30:00.000Z',
+        },
+        ],
+        [
+        'key2',
+        {
+            _type_: 'set',
+            value: [
             {
-                _type_: 'date',
-                value: '2021-05-08T13:30:00.000Z',
-            },
-            ],
-            [
-            'key2',
-            {
-                _type_: 'set',
+                _type_: 'map',
                 value: [
-                {
-                    _type_: 'map',
-                    value: [
-                    [
-                        'key1',
-                        {
-                        _type_: 'date',
-                        value: '2021-05-08T13:30:00.000Z',
-                        },
-                    ],
-                    ],
-                },
+                [
+                    'key1',
+                    {
+                    _type_: 'date',
+                    value: '2021-05-08T13:30:00.000Z',
+                    },
+                ],
                 ],
             },
             ],
+        },
         ],
-    }
-     */
+    ],
+}
+    */
 
 ```
 
@@ -59,21 +59,21 @@ Format an object to be stored as JSON
 Format a value with possible metadata to his original form, it also supports Map, Set, Arrays
 
 ```TS
-    const object = formatFromStore(objectWithMetadata);
+const object = formatFromStore(objectWithMetadata);
 
-    // Original types of the object with metadata
-    console.log(object);
+// Original types of the object with metadata
+console.log(object);
 
-    /*
-    // the result will be the same than executing the following code
-    const formatFromStoreResultExample = new Map<string, unknown>([
-        ['key1', new Date('2021-05-08T13:30:00.000Z')],
-        [
-            'key2',
-            new Set([new Map([['key1', new Date('2021-05-08T13:30:00.000Z')]])]),
-        ],
-    ]);
-     */
+/*
+// the result will be the same than executing the following code
+const formatFromStoreResultExample = new Map<string, unknown>([
+    ['key1', new Date('2021-05-08T13:30:00.000Z')],
+    [
+        'key2',
+        new Set([new Map([['key1', new Date('2021-05-08T13:30:00.000Z')]])]),
+    ],
+]);
+    */
 ```
 
 ## clone

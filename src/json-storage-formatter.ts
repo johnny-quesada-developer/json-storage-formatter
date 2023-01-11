@@ -10,7 +10,6 @@ type IValueWithMedaData = {
  * A deep clone of the object
  * */
 export const clone = <T>(obj: T): T => {
-  debugger;
   if (isPrimitive(obj) || isDate(obj)) {
     return obj;
   }
