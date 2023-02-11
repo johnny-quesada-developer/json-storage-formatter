@@ -19,28 +19,28 @@ const objectWithMetadata = formatToStore(object);
 console.log(objectWithMetadata);
 /*
 {
-    _type_: 'map',
-    value: [
+    $t: 'map',
+    $v: [
         [
         'key1',
         {
-            _type_: 'date',
-            value: '2021-05-08T13:30:00.000Z',
+            $t: 'date',
+            $v: '2021-05-08T13:30:00.000Z',
         },
         ],
         [
         'key2',
         {
-            _type_: 'set',
-            value: [
+            $t: 'set',
+            $v: [
             {
-                _type_: 'map',
-                value: [
+                $t: 'map',
+                $v: [
                 [
                     'key1',
                     {
-                    _type_: 'date',
-                    value: '2021-05-08T13:30:00.000Z',
+                    $t: 'date',
+                    $v: '2021-05-08T13:30:00.000Z',
                     },
                 ],
                 ],
@@ -50,23 +50,28 @@ console.log(objectWithMetadata);
         ],
     ],
 }
-    */
+*/
+
+// you can also stringify directly the result by specifying it on the configuration parameter
+const objectString = formatToStore(object, { stringify: true });
+
+console.log(objectString); // {"$t":"map","$v":[["key1",{"$t":"date","$v":"2021-05-08T13:30:00.000Z"}],["key2",{"$t":"set","$v":[{"$t":"map","$v":[["key1",{"$t":"date","$v":"2021-05-08T13:30:00.000Z"}]]}]}]]}
 
 ```
 
-## formatFromStore
+## formatFromStore<T>
 
 Format a value with possible metadata to his original form, it also supports Map, Set, Arrays
 
 ```TS
-const object = formatFromStore(objectWithMetadata);
+const object = formatFromStore<Map<string, unknown>>(objectWithMetadata);
 
 // Original types of the object with metadata
 console.log(object);
 
 /*
 // the result will be the same than executing the following code
-const formatFromStoreResultExample = new Map<string, unknown>([
+const formatFromStoreResultExample = new Map([
     ['key1', new Date('2021-05-08T13:30:00.000Z')],
     [
         'key2',

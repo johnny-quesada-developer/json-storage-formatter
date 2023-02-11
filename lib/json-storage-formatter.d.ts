@@ -1,3 +1,7 @@
+export type IValueWithMedaData = {
+    $t?: 'map' | 'set' | 'date';
+    $v?: unknown;
+};
 /**
  * Deep clone an object, it also suppors Map, Set, Arrays
  * @param obj
@@ -59,11 +63,16 @@ export declare const isPrimitive: (value: unknown) => boolean;
  * @returns
  * Orinal form of the value
  */
-export declare const formatFromStore: <T>(value: T) => unknown;
+export declare const formatFromStore: <T = unknown>(value: unknown) => T;
 /**
- * Add metadata to a value to store it as json, it also supports Map, Set, Arrays
- * @returns
- * A value with metadata to store it as json
+ * Add metadata to a value to store it as json, it also supports Map, Set, Arrays,
+ * Returns a new object wich is a clone of the original object with metadata
+ * @template {TValue} The type of the value to format
+ * @template {TStringify} If the value should be stringified
+ * @param {TValue} value The value to format
+ * @param {{ stringify: TStringify }} { stringify: boolean } If the value should be stringified
  */
-export declare const formatToStore: <T>(value: T) => unknown;
+export declare const formatToStore: <TValue, TStringify extends boolean = false>(value: TValue, { stringify }?: {
+    stringify: TStringify;
+}) => TStringify extends true ? string : unknown;
 //# sourceMappingURL=json-storage-formatter.d.ts.map

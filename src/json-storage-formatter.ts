@@ -1,6 +1,6 @@
-type IValueWithMedaData = {
-  _type_?: 'map' | 'set' | 'date';
-  value?: unknown;
+export type IValueWithMedaData = {
+  $t?: 'map' | 'set' | 'date';
+  $v?: unknown;
 };
 
 /**
@@ -113,33 +113,33 @@ export const isPrimitive = (value: unknown) =>
  * @returns
  * Orinal form of the value
  */
-export const formatFromStore = <T>(value: T): unknown => {
+export const formatFromStore = <T = unknown>(value: unknown): T => {
   const format = (obj: T & IValueWithMedaData): unknown => {
     if (isPrimitive(obj)) {
       return obj;
     }
 
-    const isMetaDate = obj?._type_ === 'date';
+    const isMetaDate = obj?.$t === 'date';
 
     if (isMetaDate) {
-      return new Date(obj.value as string);
+      return new Date(obj.$v as string);
     }
 
-    const isMetaMap = obj?._type_ === 'map';
+    const isMetaMap = obj?.$t === 'map';
 
     if (isMetaMap) {
       const mapData: [string, unknown][] = (
-        ((obj.value as []) ?? []) as [string, unknown][]
+        ((obj.$v as []) ?? []) as [string, unknown][]
       ).map(([key, item]) => [key, formatFromStore(item)]);
 
       return new Map(mapData);
     }
 
-    const isMetaSet = obj?._type_ === 'set';
+    const isMetaSet = obj?.$t === 'set';
 
     if (isMetaSet) {
       const setData: unknown[] =
-        (obj.value as []) ?? [].map((item) => formatFromStore(item));
+        (obj.$v as []) ?? [].map((item) => formatFromStore(item));
 
       return new Set(setData);
     }
@@ -164,16 +164,22 @@ export const formatFromStore = <T>(value: T): unknown => {
     }, {});
   };
 
-  return format(clone(value as T & IValueWithMedaData));
+  return format(clone(value as T & IValueWithMedaData)) as T;
 };
 
 /**
- * Add metadata to a value to store it as json, it also supports Map, Set, Arrays
- * @returns
- * A value with metadata to store it as json
+ * Add metadata to a value to store it as json, it also supports Map, Set, Arrays,
+ * Returns a new object wich is a clone of the original object with metadata
+ * @template {TValue} The type of the value to format
+ * @template {TStringify} If the value should be stringified
+ * @param {TValue} value The value to format
+ * @param {{ stringify: TStringify }} { stringify: boolean } If the value should be stringified
  */
-export const formatToStore = <T>(value: T): unknown => {
-  const format = (obj: T): unknown => {
+export const formatToStore = <TValue, TStringify extends true | false = false>(
+  value: TValue,
+  { stringify }: { stringify: TStringify } = { stringify: false as TStringify }
+): TStringify extends true ? string : unknown => {
+  const format = (obj: TValue): unknown => {
     if (isPrimitive(obj)) {
       return obj;
     }
@@ -191,10 +197,12 @@ export const formatToStore = <T>(value: T): unknown => {
     if (isMap) {
       const pairs = Array.from((obj as Map<unknown, unknown>).entries());
 
-      return {
-        _type_: 'map',
-        value: pairs.map((pair) => formatToStore(pair)),
+      const value: IValueWithMedaData = {
+        $t: 'map',
+        $v: pairs.map((pair) => formatToStore(pair)),
       };
+
+      return value;
     }
 
     const isSet = obj instanceof Set;
@@ -202,23 +210,27 @@ export const formatToStore = <T>(value: T): unknown => {
     if (isSet) {
       const values = Array.from((obj as Set<unknown>).values());
 
-      return {
-        _type_: 'set',
-        value: values.map((item) => formatToStore(item)),
+      const value: IValueWithMedaData = {
+        $t: 'set',
+        $v: values.map((item) => formatToStore(item)),
       };
+
+      return value;
     }
 
     if (isDate(obj)) {
-      return {
-        _type_: 'date',
-        value: (obj as Date).toISOString(),
+      const value: IValueWithMedaData = {
+        $t: 'date',
+        $v: (obj as Date).toISOString(),
       };
+
+      return value;
     }
 
     const keys = Object.keys(obj as Record<string, unknown>);
 
     return keys.reduce((acumulator, key) => {
-      const prop = obj[key as keyof T];
+      const prop = obj[key as keyof TValue];
 
       return {
         ...acumulator,
@@ -227,5 +239,11 @@ export const formatToStore = <T>(value: T): unknown => {
     }, {});
   };
 
-  return format(clone(value));
+  const objectWithMetadata = format(clone(value));
+
+  const result = stringify
+    ? JSON.stringify(objectWithMetadata)
+    : objectWithMetadata;
+
+  return result as TStringify extends true ? string : unknown;
 };

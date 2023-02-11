@@ -7,6 +7,7 @@ import {
   isString,
   formatFromStore,
   formatToStore,
+  IValueWithMedaData,
 } from '../src';
 
 describe('isBoolean', () => {
@@ -139,12 +140,14 @@ describe('formatFromStore', () => {
     expect(formatFromStore(true)).toEqual(true);
     expect(formatFromStore(false)).toEqual(false);
 
-    expect(
-      formatFromStore({
-        _type_: 'date',
-        value: '2020-01-01T00:00:00.000Z',
-      })
-    ).toEqual(new Date('2020-01-01T00:00:00.000Z'));
+    const value: IValueWithMedaData = {
+      $t: 'date',
+      $v: '2020-01-01T00:00:00.000Z',
+    };
+
+    expect(formatFromStore(value)).toEqual(
+      new Date('2020-01-01T00:00:00.000Z')
+    );
   });
 
   it('should return string when string is input', () => {
@@ -158,10 +161,15 @@ describe('formatFromStore', () => {
     expect(formatFromStore('false')).toEqual('false');
   });
 
+  const value: IValueWithMedaData = {
+    $v: '2020-01-01T00:00:00.000Z',
+    $t: 'date',
+  };
+
   it('should return the parsed value if it is a valid JSON string', () => {
-    expect(
-      formatFromStore({ value: '2020-01-01T00:00:00.000Z', _type_: 'date' })
-    ).toEqual(new Date('2020-01-01T00:00:00.000Z'));
+    expect(formatFromStore(value)).toEqual(
+      new Date('2020-01-01T00:00:00.000Z')
+    );
   });
 });
 
@@ -173,10 +181,12 @@ describe('formatToStore', () => {
     const arr: unknown[] = [];
     expect(formatToStore(arr)).toEqual(arr);
 
-    expect(formatToStore(new Date('2022-12-13T23:35:30.675Z'))).toEqual({
-      _type_: 'date',
-      value: '2022-12-13T23:35:30.675Z',
-    });
+    const value: IValueWithMedaData = {
+      $t: 'date',
+      $v: '2022-12-13T23:35:30.675Z',
+    };
+
+    expect(formatToStore(new Date('2022-12-13T23:35:30.675Z'))).toEqual(value);
   });
 
   it('should return the stringified value if it is a primitive', () => {
@@ -189,5 +199,16 @@ describe('formatToStore', () => {
     expect(formatToStore(undefined)).toEqual(undefined);
     expect(formatToStore(true)).toEqual(true);
     expect(formatToStore(false)).toEqual(false);
+  });
+
+  it('should return the stringified the stringify parameter is true', () => {
+    expect(formatToStore(1, { stringify: true })).toEqual('1');
+    expect(formatToStore(0, { stringify: true })).toEqual('0');
+    expect(formatToStore('', { stringify: true })).toEqual('""');
+    expect(formatToStore('true', { stringify: true })).toEqual('"true"');
+    expect(formatToStore('false', { stringify: true })).toEqual('"false"');
+    expect(formatToStore(null, { stringify: true })).toEqual('null');
+    expect(formatToStore(true, { stringify: true })).toEqual('true');
+    expect(formatToStore(false, { stringify: true })).toEqual('false');
   });
 });
