@@ -1,5 +1,5 @@
 export type IValueWithMedaData = {
-    $t?: 'map' | 'set' | 'date';
+    $t?: 'map' | 'set' | 'date' | 'regex' | 'error';
     $v?: unknown;
 };
 /**
@@ -48,6 +48,12 @@ export declare const isString: (value: unknown) => boolean;
  * false otherwise
  */
 export declare const isDate: (value: unknown) => boolean;
+/**
+ * Check if a value is a RegExp
+ * @param value The value to check
+ * @returns true if the value is a RegExp, false otherwise
+ * */
+export declare const isRegex: (value: unknown) => boolean;
 /**
  * Check if a value is a primitive
  * @param value

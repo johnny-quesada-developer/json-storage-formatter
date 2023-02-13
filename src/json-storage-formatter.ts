@@ -1,5 +1,5 @@
 export type IValueWithMedaData = {
-  $t?: 'map' | 'set' | 'date';
+  $t?: 'map' | 'set' | 'date' | 'regex' | 'error';
   $v?: unknown;
 };
 
@@ -36,10 +36,22 @@ export const clone = <T>(obj: T): T => {
     return new Set(values.map((value) => clone(value))) as T;
   }
 
+  const isReg = obj instanceof RegExp;
+
+  if (isReg) {
+    return new RegExp(obj.toString()) as T;
+  }
+
+  const isError = obj instanceof Error;
+
+  if (isError) {
+    return new Error(obj.message) as T;
+  }
+
   const keys = Object.keys(obj as Record<string, unknown>);
 
   return keys.reduce((acumulator, key) => {
-    const value = obj[key as keyof T];
+    const value: unknown = obj[key as keyof T];
 
     return {
       ...acumulator,
@@ -93,6 +105,13 @@ export const isString = (value: unknown) => typeof value === 'string';
 export const isDate = (value: unknown) => value instanceof Date;
 
 /**
+ * Check if a value is a RegExp
+ * @param value The value to check
+ * @returns true if the value is a RegExp, false otherwise
+ * */
+export const isRegex = (value: unknown) => value instanceof RegExp;
+
+/**
  * Check if a value is a primitive
  * @param value
  * @returns
@@ -142,6 +161,18 @@ export const formatFromStore = <T = unknown>(value: unknown): T => {
         (obj.$v as []) ?? [].map((item) => formatFromStore(item));
 
       return new Set(setData);
+    }
+
+    const isMetaReg = obj?.$t === 'regex';
+
+    if (isMetaReg) {
+      return new RegExp(obj.$v as string);
+    }
+
+    const isMetaError = obj?.$t === 'error';
+
+    if (isMetaError) {
+      return new Error(obj.$v as string);
     }
 
     const isArray = Array.isArray(obj);
@@ -222,6 +253,26 @@ export const formatToStore = <TValue, TStringify extends true | false = false>(
       const value: IValueWithMedaData = {
         $t: 'date',
         $v: (obj as Date).toISOString(),
+      };
+
+      return value;
+    }
+
+    if (isRegex(obj)) {
+      const value: IValueWithMedaData = {
+        $t: 'regex',
+        $v: (obj as RegExp).toString(),
+      };
+
+      return value;
+    }
+
+    const isError = obj instanceof Error;
+
+    if (isError) {
+      const value: IValueWithMedaData = {
+        $t: 'error',
+        $v: (obj as Error).message,
       };
 
       return value;
