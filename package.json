@@ -1,8 +1,9 @@
 {
   "name": "json-storage-formatter",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Package for json stringify objects without losing data types",
-  "main": "lib/json-storage-formatter.js",
+  "main": "lib/bundle.js",
+  "types": "lib/index.d.ts",
   "files": [
     "lib"
   ],
@@ -10,7 +11,7 @@
     "test:debug": "node --inspect-brk node_modules/.bin/jest --watch --runInBand",
     "test:quick": "jest --maxWorkers=4 -c --no-watchman -u",
     "test:coverage": "jest --maxWorkers=4 -c --colors --no-watchman --verbose --coverage",
-    "build": "tsc",
+    "build": "webpack --config webpack.config.js",
     "prepare": "npm run build",
     "version": "npm run format && git add -A src",
     "postversion": "git push && git push --tags"
@@ -34,10 +35,18 @@
   },
   "homepage": "https://github.com/johnny-quesada-developer/json-storage-formatter#readme",
   "devDependencies": {
+    "@babel/core": "^7.21.3",
+    "@babel/plugin-transform-modules-commonjs": "^7.21.2",
+    "@babel/preset-env": "^7.20.2",
+    "@babel/preset-typescript": "^7.21.0",
     "@types/jest": "^26.0.17",
     "@types/lodash": "^4.14.165",
+    "babel-loader": "^9.1.2",
     "jest": "^29.3.1",
     "ts-jest": "^29.0.3",
-    "typescript": "^4.1.2"
+    "ts-loader": "^9.4.2",
+    "typescript": "^4.1.2",
+    "webpack": "^5.76.3",
+    "webpack-cli": "^5.0.1"
   }
 }
