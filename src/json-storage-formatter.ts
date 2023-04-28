@@ -1,61 +1,86 @@
-export type IValueWithMedaData = {
-  $t?: 'map' | 'set' | 'date' | 'regex' | 'error';
+export type IValueWithMetaData = {
+  $t?: 'map' | 'set' | 'date' | 'regex' | 'error' | 'function';
   $v?: unknown;
 };
 
 /**
  * Deep clone an object, it also suppors Map, Set, Arrays
- * @param obj
+ * @param value
  * @returns
  * A deep clone of the object
  * */
-export const clone = <T>(obj: T): T => {
-  if (isPrimitive(obj) || isDate(obj)) {
-    return obj;
+export const clone = <T>(
+  value: T,
+  {
+    shallow,
+  }: {
+    /**
+     * If true, it will only clone the first level of the object
+     */
+    shallow?: boolean;
+  } = {}
+): T => {
+  if (isPrimitive(value) || isDate(value)) {
+    return value;
   }
 
-  const isArray = Array.isArray(obj);
+  const isArray = Array.isArray(value);
 
   if (isArray) {
-    return obj.map((item) => clone(item)) as T;
+    if (shallow) return [...value] as T;
+
+    return value.map((item) => clone(item)) as T;
   }
 
-  const isMap = obj instanceof Map;
+  const isMap = value instanceof Map;
 
   if (isMap) {
-    const pairs = Array.from(obj.entries());
+    const pairs = Array.from(value.entries());
+
+    if (shallow) return new Map(pairs) as T;
 
     return new Map(pairs.map((pair) => clone(pair))) as T;
   }
 
-  const isSet = obj instanceof Set;
+  const isSet = value instanceof Set;
 
   if (isSet) {
-    const values = Array.from(obj.values());
+    const values = Array.from(value.values());
 
-    return new Set(values.map((value) => clone(value))) as T;
+    if (shallow) return new Set(values) as T;
+
+    return new Set(values.map(($value) => clone($value))) as T;
   }
 
-  const isReg = obj instanceof RegExp;
+  const isReg = value instanceof RegExp;
 
   if (isReg) {
-    return new RegExp(obj.toString()) as T;
+    return new RegExp(value.toString()) as T;
   }
 
-  const isError = obj instanceof Error;
+  if (isFunction(value)) {
+    if (shallow) return value;
+
+    return Object.create(value as object);
+  }
+
+  // if shallow is true, we just return a copy of the object
+  if (shallow) return { ...value } as T;
+
+  const isError = value instanceof Error;
 
   if (isError) {
-    return new Error(obj.message) as T;
+    return new Error(value.message) as T;
   }
 
-  const keys = Object.keys(obj as Record<string, unknown>);
+  const keys = Object.keys(value as Record<string, unknown>);
 
-  return keys.reduce((acumulator, key) => {
-    const value: unknown = obj[key as keyof T];
+  return keys.reduce((accumulator, key) => {
+    const $value: unknown = value[key as keyof T];
 
     return {
-      ...acumulator,
-      [key]: clone(value),
+      ...accumulator,
+      [key]: clone($value),
     };
   }, {}) as T;
 };
@@ -112,6 +137,14 @@ export const isDate = (value: unknown) => value instanceof Date;
 export const isRegex = (value: unknown) => value instanceof RegExp;
 
 /**
+ * Check if a value is a function
+ * @param value The value to check
+ * @returns true if the value is a function, false otherwise
+ * */
+export const isFunction = (value: unknown) =>
+  typeof value === 'function' || value instanceof Function;
+
+/**
  * Check if a value is a primitive
  * @param value
  * @returns
@@ -130,10 +163,18 @@ export const isPrimitive = (value: unknown) =>
  * Format an value with possible metadata to his original form, it also supports Map, Set, Arrays
  * @param value
  * @returns
- * Orinal form of the value
+ * Original form of the value
  */
-export const formatFromStore = <T = unknown>(value: unknown): T => {
-  const format = (obj: T & IValueWithMedaData): unknown => {
+export const formatFromStore = <T = unknown>(
+  value: unknown,
+  {
+    jsonParse,
+  }: {
+    /** If the value should be parsed from json before formatting */
+    jsonParse?: boolean;
+  } = {}
+): T => {
+  const format = (obj: T & IValueWithMetaData): unknown => {
     if (isPrimitive(obj)) {
       return obj;
     }
@@ -183,24 +224,45 @@ export const formatFromStore = <T = unknown>(value: unknown): T => {
       );
     }
 
+    const isMetaFunction = obj?.$t === 'function';
+
+    if (isMetaFunction) {
+      // return a function that calls the original function
+      return Function(`(${obj.$v})(...arguments)`);
+    }
+
     const keys = Object.keys(obj as Record<string, unknown>);
 
-    return keys.reduce((acumulator, key) => {
-      const unformatedValue: unknown = obj[key as keyof T];
+    return keys.reduce((accumulator, key) => {
+      const unformattedValue: unknown = obj[key as keyof T];
 
       return {
-        ...acumulator,
-        [key]: formatFromStore(unformatedValue),
+        ...accumulator,
+        [key]: formatFromStore(unformattedValue),
       };
     }, {});
   };
 
-  return format(clone(value as T & IValueWithMedaData)) as T;
+  const value$ = jsonParse
+    ? JSON.parse(value as string)
+    : clone(value as T & IValueWithMetaData);
+
+  return format(value$) as T;
 };
+
+export type TPrimitives =
+  | 'string'
+  | 'number'
+  | 'bigint'
+  | 'boolean'
+  | 'symbol'
+  | 'undefined'
+  | 'function'
+  | 'object';
 
 /**
  * Add metadata to a value to store it as json, it also supports Map, Set, Arrays,
- * Returns a new object wich is a clone of the original object with metadata
+ * Returns a new object which is a clone of the original object with metadata
  * @template {TValue} The type of the value to format
  * @template {TStringify} If the value should be stringified
  * @param {TValue} value The value to format
@@ -208,9 +270,53 @@ export const formatFromStore = <T = unknown>(value: unknown): T => {
  */
 export const formatToStore = <TValue, TStringify extends true | false = false>(
   value: TValue,
-  { stringify }: { stringify: TStringify } = { stringify: false as TStringify }
+  {
+    stringify,
+    validator,
+    excludeTypes,
+    excludeKeys,
+  }: {
+    stringify?: TStringify;
+    excludeTypes?: TPrimitives[] | Set<TPrimitives>;
+    excludeKeys?: string[] | Set<string>;
+    /**
+     * Returns true if the value should be included in the stringified version,
+     * if provided it will override the default validator and the excludesTypes and excludeKeys
+     */
+    validator?: ({
+      obj,
+      key,
+      value,
+    }: {
+      obj: unknown;
+      key: string;
+      value: any;
+    }) => boolean | undefined;
+  } = { stringify: false as TStringify }
 ): TStringify extends true ? string : unknown => {
-  const format = (obj: TValue): unknown => {
+  const $excludesTypes = new Set(excludeTypes ?? []);
+  const $excludeKeys = new Set(excludeKeys ?? []);
+  const hasDefaultValidator = $excludesTypes.size || $excludeKeys.size;
+
+  const $validator =
+    validator ??
+    (({
+      key,
+      value: $value,
+    }: {
+      obj: unknown;
+      key: string;
+      value: any;
+    }): boolean => {
+      if (!hasDefaultValidator) return true;
+
+      const isExcludedKey = $excludeKeys.has(key);
+      const isExcludedType = $excludesTypes.has(typeof $value);
+
+      return !isExcludedKey && !isExcludedType;
+    });
+
+  const format = <T>(obj: T): unknown => {
     if (isPrimitive(obj)) {
       return obj;
     }
@@ -218,9 +324,7 @@ export const formatToStore = <TValue, TStringify extends true | false = false>(
     const isArray = Array.isArray(obj);
 
     if (isArray) {
-      return (obj as unknown as Array<unknown>).map((item) =>
-        formatToStore(item)
-      );
+      return (obj as unknown as Array<unknown>).map((item) => format(item));
     }
 
     const isMap = obj instanceof Map;
@@ -228,9 +332,9 @@ export const formatToStore = <TValue, TStringify extends true | false = false>(
     if (isMap) {
       const pairs = Array.from((obj as Map<unknown, unknown>).entries());
 
-      const value: IValueWithMedaData = {
+      const value: IValueWithMetaData = {
         $t: 'map',
-        $v: pairs.map((pair) => formatToStore(pair)),
+        $v: pairs.map((pair) => format(pair)),
       };
 
       return value;
@@ -241,16 +345,16 @@ export const formatToStore = <TValue, TStringify extends true | false = false>(
     if (isSet) {
       const values = Array.from((obj as Set<unknown>).values());
 
-      const value: IValueWithMedaData = {
+      const value: IValueWithMetaData = {
         $t: 'set',
-        $v: values.map((item) => formatToStore(item)),
+        $v: values.map((item) => format(item)),
       };
 
       return value;
     }
 
     if (isDate(obj)) {
-      const value: IValueWithMedaData = {
+      const value: IValueWithMetaData = {
         $t: 'date',
         $v: (obj as Date).toISOString(),
       };
@@ -259,7 +363,7 @@ export const formatToStore = <TValue, TStringify extends true | false = false>(
     }
 
     if (isRegex(obj)) {
-      const value: IValueWithMedaData = {
+      const value: IValueWithMetaData = {
         $t: 'regex',
         $v: (obj as RegExp).toString(),
       };
@@ -267,10 +371,28 @@ export const formatToStore = <TValue, TStringify extends true | false = false>(
       return value;
     }
 
+    if (isFunction(obj)) {
+      let value: IValueWithMetaData;
+
+      try {
+        value = {
+          $t: 'function',
+          $v: obj.toString(),
+        };
+      } catch (error) {
+        value = {
+          $t: 'error',
+          $v: 'Error: Could not serialize function',
+        };
+      }
+
+      return value;
+    }
+
     const isError = obj instanceof Error;
 
     if (isError) {
-      const value: IValueWithMedaData = {
+      const value: IValueWithMetaData = {
         $t: 'error',
         $v: (obj as Error).message,
       };
@@ -280,12 +402,20 @@ export const formatToStore = <TValue, TStringify extends true | false = false>(
 
     const keys = Object.keys(obj as Record<string, unknown>);
 
-    return keys.reduce((acumulator, key) => {
-      const prop = obj[key as keyof TValue];
+    return keys.reduce((accumulator, key) => {
+      const prop = obj[key as keyof T];
+      const propValue = format(prop);
+      const shouldInclude = $validator({
+        obj,
+        key,
+        value: propValue,
+      });
+
+      if (!shouldInclude) return accumulator;
 
       return {
-        ...acumulator,
-        [key]: formatToStore(prop),
+        ...accumulator,
+        [key]: format(prop),
       };
     }, {});
   };

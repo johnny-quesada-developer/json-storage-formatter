@@ -7,7 +7,8 @@ import {
   isString,
   formatFromStore,
   formatToStore,
-  IValueWithMedaData,
+  IValueWithMetaData,
+  clone,
 } from '../src';
 
 describe('isBoolean', () => {
@@ -129,6 +130,74 @@ describe('isString', () => {
   });
 });
 
+describe('clone', () => {
+  it('should return a clone of the object', () => {
+    const obj = {
+      a: 1,
+      b: '2',
+      c: true,
+      d: new Date(),
+      e: null,
+      f: undefined,
+      g: {
+        h: 3,
+        i: '4',
+        j: false,
+        k: new Date(),
+        array: [1, 2, 3],
+        map: new Map([
+          ['a', 1],
+          ['b', 2],
+          ['c', 3],
+        ]),
+      },
+    };
+
+    const cloned = clone(obj);
+
+    expect(cloned).toEqual(obj);
+    expect(cloned).not.toBe(obj);
+
+    expect(cloned.g.array).toEqual(obj.g.array);
+    expect(cloned.g.array).not.toBe(obj.g.array);
+    expect(cloned.g.map).toEqual(obj.g.map);
+    expect(cloned.g.map).not.toBe(obj.g.map);
+  });
+
+  it('should return a shallow clone of the object', () => {
+    const obj = {
+      a: 1,
+      b: '2',
+      c: true,
+      d: new Date(),
+      e: null,
+      f: undefined,
+      g: {
+        h: 3,
+        i: '4',
+        j: false,
+        k: new Date(),
+        array: [1, 2, 3],
+        map: new Map([
+          ['a', 1],
+          ['b', 2],
+          ['c', 3],
+        ]),
+      },
+    };
+
+    const cloned = clone(obj, { shallow: true });
+
+    expect(cloned).toEqual(obj);
+    expect(cloned).not.toBe(obj);
+
+    expect(cloned.g.array).toEqual(obj.g.array);
+    expect(cloned.g.array).toBe(obj.g.array);
+    expect(cloned.g.map).toEqual(obj.g.map);
+    expect(cloned.g.map).toBe(obj.g.map);
+  });
+});
+
 describe('formatFromStore', () => {
   it('should return the original value if it is not a string', () => {
     expect(formatFromStore({})).toEqual({});
@@ -140,7 +209,7 @@ describe('formatFromStore', () => {
     expect(formatFromStore(true)).toEqual(true);
     expect(formatFromStore(false)).toEqual(false);
 
-    const value: IValueWithMedaData = {
+    const value: IValueWithMetaData = {
       $t: 'date',
       $v: '2020-01-01T00:00:00.000Z',
     };
@@ -161,7 +230,7 @@ describe('formatFromStore', () => {
     expect(formatFromStore('false')).toEqual('false');
   });
 
-  const value: IValueWithMedaData = {
+  const value: IValueWithMetaData = {
     $v: '2020-01-01T00:00:00.000Z',
     $t: 'date',
   };
@@ -181,7 +250,7 @@ describe('formatToStore', () => {
     const arr: unknown[] = [];
     expect(formatToStore(arr)).toEqual(arr);
 
-    const value: IValueWithMedaData = {
+    const value: IValueWithMetaData = {
       $t: 'date',
       $v: '2022-12-13T23:35:30.675Z',
     };
@@ -210,5 +279,63 @@ describe('formatToStore', () => {
     expect(formatToStore(null, { stringify: true })).toEqual('null');
     expect(formatToStore(true, { stringify: true })).toEqual('true');
     expect(formatToStore(false, { stringify: true })).toEqual('false');
+  });
+
+  it('should avoid adding the object keys if the excludeKeys parameter is provided', () => {
+    const obj = {
+      a: 1,
+      b: '2',
+      c: true,
+      e: null,
+      f: undefined,
+    };
+
+    const formatted = formatToStore(obj, { excludeKeys: ['a', 'b'] });
+
+    expect(formatted).toEqual({
+      c: true,
+      e: null,
+      f: undefined,
+    });
+  });
+
+  it('should avoid adding the object keys which match the excludesTypes parameter', () => {
+    const obj = {
+      a: 1,
+      b: '2',
+      c: true,
+      f: undefined,
+      g: () => {},
+      t: {},
+    };
+
+    const formatted = formatToStore(obj, {
+      excludeTypes: ['number', 'object'],
+    });
+
+    expect(formatted).toEqual({
+      b: '2',
+      c: true,
+      f: undefined,
+    });
+  });
+
+  it('should correctly use custom props validator', () => {
+    const obj = {
+      a: 1,
+      b: '2',
+      c: true,
+      f: undefined,
+    };
+
+    const formatted = formatToStore(obj, {
+      validator: ({ key }) => key !== 'b',
+    });
+
+    expect(formatted).toEqual({
+      a: 1,
+      c: true,
+      f: undefined,
+    });
   });
 });
