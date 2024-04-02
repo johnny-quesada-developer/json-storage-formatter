@@ -169,9 +169,11 @@ export const formatFromStore = <T = unknown>(
   value: unknown,
   {
     jsonParse,
+    sortKeys,
   }: {
     /** If the value should be parsed from json before formatting */
     jsonParse?: boolean;
+    sortKeys?: boolean | ((a: string, b: string) => number);
   } = {}
 ): T => {
   const format = (obj: T & IValueWithMetaData): unknown => {
@@ -231,7 +233,16 @@ export const formatFromStore = <T = unknown>(
       return Function(`(${obj.$v})(...arguments)`);
     }
 
-    const keys = Object.keys(obj as Record<string, unknown>);
+    const keys = (() => {
+      const _keys = Object.keys(obj as Record<string, unknown>);
+
+      if (!sortKeys) return _keys;
+
+      if (isFunction(sortKeys))
+        return _keys.sort(sortKeys as (a: string, b: string) => number);
+
+      return _keys.sort((a, b) => (a ?? '').localeCompare(b));
+    })();
 
     return keys.reduce((accumulator, key) => {
       const unformattedValue: unknown = obj[key as keyof T];
@@ -275,10 +286,12 @@ export const formatToStore = <TValue, TStringify extends true | false = false>(
     validator,
     excludeTypes,
     excludeKeys,
+    sortKeys,
   }: {
     stringify?: TStringify;
     excludeTypes?: TPrimitives[] | Set<TPrimitives>;
     excludeKeys?: string[] | Set<string>;
+    sortKeys?: boolean | ((a: string, b: string) => number);
     /**
      * Returns true if the value should be included in the stringified version,
      * if provided it will override the default validator and the excludesTypes and excludeKeys
@@ -400,7 +413,16 @@ export const formatToStore = <TValue, TStringify extends true | false = false>(
       return value;
     }
 
-    const keys = Object.keys(obj as Record<string, unknown>);
+    const keys = (() => {
+      const _keys = Object.keys(obj as Record<string, unknown>);
+
+      if (!sortKeys) return _keys;
+
+      if (isFunction(sortKeys))
+        return _keys.sort(sortKeys as (a: string, b: string) => number);
+
+      return _keys.sort((a, b) => (a ?? '').localeCompare(b));
+    })();
 
     return keys.reduce((accumulator, key) => {
       const prop = obj[key as keyof T];
