@@ -92,7 +92,8 @@ export const clone = <T>(
  * true if the value is null or undefined
  * false otherwise
  * */
-export const isNil = (value: unknown) => value === null || value === undefined;
+export const isNil: (value: unknown) => value is null | undefined = 
+  (value: unknown): value is null | undefined => value === null || value === undefined;
 
 /**
  * Check if a value is a number
@@ -101,7 +102,7 @@ export const isNil = (value: unknown) => value === null || value === undefined;
  *  true if the value is a number
  * false otherwise
  *  */
-export const isNumber = (value: unknown) => typeof value === 'number';
+export const isNumber = (value: unknown): value is number => typeof value === 'number';
 
 /**
  * Check if a value is a boolean
@@ -110,7 +111,7 @@ export const isNumber = (value: unknown) => typeof value === 'number';
  * true if the value is a boolean
  * false otherwise
  * */
-export const isBoolean = (value: unknown) => typeof value === 'boolean';
+export const isBoolean = (value: unknown): value is boolean => typeof value === 'boolean';
 
 /**
  * Check if a value is a string
@@ -119,7 +120,7 @@ export const isBoolean = (value: unknown) => typeof value === 'boolean';
  * true if the value is a string
  * false otherwise
  * */
-export const isString = (value: unknown) => typeof value === 'string';
+export const isString = (value: unknown): value is string => typeof value === 'string';
 
 /** Check if a value is a Date
  * @param value
@@ -127,21 +128,21 @@ export const isString = (value: unknown) => typeof value === 'string';
  * true if the value is a Date
  * false otherwise
  */
-export const isDate = (value: unknown) => value instanceof Date;
+export const isDate = (value: unknown): value is Date => value instanceof Date;
 
 /**
  * Check if a value is a RegExp
  * @param value The value to check
  * @returns true if the value is a RegExp, false otherwise
  * */
-export const isRegex = (value: unknown) => value instanceof RegExp;
+export const isRegex = (value: unknown): value is RegExp => value instanceof RegExp;
 
 /**
  * Check if a value is a function
  * @param value The value to check
  * @returns true if the value is a function, false otherwise
  * */
-export const isFunction = (value: unknown) =>
+export const isFunction = <T extends (...args: Parameters<T>) => ReturnType<T>>(value: unknown): value is NonNullable<T> =>
   typeof value === 'function' || value instanceof Function;
 
 /**
@@ -152,7 +153,7 @@ export const isFunction = (value: unknown) =>
  * false otherwise
  * null, number, boolean, string, symbol
  */
-export const isPrimitive = (value: unknown) =>
+export const isPrimitive = (value: unknown): value is null | number | boolean | string | symbol =>
   isNil(value) ||
   isNumber(value) ||
   isBoolean(value) ||
@@ -303,7 +304,7 @@ export const formatToStore = <TValue, TStringify extends true | false = false>(
     }: {
       obj: unknown;
       key: string;
-      value: any;
+      value: unknown;
     }) => boolean | undefined;
   } = { stringify: false as TStringify }
 ): TStringify extends true ? string : unknown => {
@@ -319,7 +320,7 @@ export const formatToStore = <TValue, TStringify extends true | false = false>(
     }: {
       obj: unknown;
       key: string;
-      value: any;
+      value: unknown;
     }): boolean => {
       if (!hasDefaultValidator) return true;
 
