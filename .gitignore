@@ -130,3 +130,4 @@ dist
 lib
 *.js
 *.d.ts
+.DS_Store
