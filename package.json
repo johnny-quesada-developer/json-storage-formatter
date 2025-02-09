@@ -1,9 +1,65 @@
 {
   "name": "json-storage-formatter",
-  "version": "1.1.2",
+  "version": "2.0.0",
   "description": "Package for json stringify objects without losing data types",
   "main": "lib/bundle.js",
   "types": "lib/index.d.ts",
+  "module": "lib/index.js",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": "./lib/index.js",
+      "require": "./lib/index.js"
+    },
+    "./clone": {
+      "import": "./lib/clone.js",
+      "require": "./lib/clone.js"
+    },
+    "./isNil": {
+      "import": "./lib/isNil.js",
+      "require": "./lib/isNil.js"
+    },
+    "./isNumber": {
+      "import": "./lib/isNumber.js",
+      "require": "./lib/isNumber.js"
+    },
+    "./isBoolean": {
+      "import": "./lib/isBoolean.js",
+      "require": "./lib/isBoolean.js"
+    },
+    "./isString": {
+      "import": "./lib/isString.js",
+      "require": "./lib/isString.js"
+    },
+    "./isDate": {
+      "import": "./lib/isDate.js",
+      "require": "./lib/isDate.js"
+    },
+    "./isRegex": {
+      "import": "./lib/isRegex.js",
+      "require": "./lib/isRegex.js"
+    },
+    "./isFunction": {
+      "import": "./lib/isFunction.js",
+      "require": "./lib/isFunction.js"
+    },
+    "./isPrimitive": {
+      "import": "./lib/isPrimitive.js",
+      "require": "./lib/isPrimitive.js"
+    },
+    "./json-storage-formatter.types": {
+      "import": "./lib/json-storage-formatter.types.js",
+      "require": "./lib/json-storage-formatter.types.js"
+    },
+    "./formatFromStore": {
+      "import": "./lib/formatFromStore.js",
+      "require": "./lib/formatFromStore.js"
+    },
+    "./formatToStore": {
+      "import": "./lib/formatToStore.js",
+      "require": "./lib/formatToStore.js"
+    }
+  },
   "files": [
     "lib"
   ],
