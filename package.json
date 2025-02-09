@@ -1,83 +1,75 @@
 {
   "name": "json-storage-formatter",
-  "version": "2.0.1",
+  "version": "2.0.5",
   "description": "Package for json stringify objects without losing data types",
-  "main": "lib/bundle.js",
-  "types": "lib/index.d.ts",
-  "typesVersions": {
-    "*": {
-      "clone": ["./lib/clone.d.ts"],
-      "isNil": ["./lib/isNil.d.ts"],
-      "isNumber": ["./lib/isNumber.d.ts"],
-      "isBoolean": ["./lib/isBoolean.d.ts"],
-      "isString": ["./lib/isString.d.ts"],
-      "isDate": ["./lib/isDate.d.ts"],
-      "isRegex": ["./lib/isRegex.d.ts"],
-      "isFunction": ["./lib/isFunction.d.ts"],
-      "isPrimitive": ["./lib/isPrimitive.d.ts"],
-      "types": ["./lib/types.d.ts"],
-      "formatFromStore": ["./lib/formatFromStore.d.ts"],
-      "formatToStore": ["./lib/formatToStore.d.ts"]
-    }
-  },
-  "module": "lib/index.js",
+  "main": "./bundle.js",
+  "types": "./index.d.ts",
   "sideEffects": false,
   "exports": {
     ".": {
-      "import": "./lib/index.js",
-      "require": "./lib/index.js"
+      "import": "./bundle.js",
+      "require": "./bundle.js",
+      "types": "./index.d.ts"
     },
     "./clone": {
-      "import": "./lib/clone.js",
-      "require": "./lib/clone.js"
+      "import": "./clone.js",
+      "require": "./clone.js",
+      "types": "./clone.d.ts"
     },
     "./isNil": {
-      "import": "./lib/isNil.js",
-      "require": "./lib/isNil.js"
+      "import": "./isNil.js",
+      "require": "./isNil.js",
+      "types": "./isNil.d.ts"
     },
     "./isNumber": {
-      "import": "./lib/isNumber.js",
-      "require": "./lib/isNumber.js"
+      "import": "./isNumber.js",
+      "require": "./isNumber.js",
+      "types": "./isNumber.d.ts"
     },
     "./isBoolean": {
-      "import": "./lib/isBoolean.js",
-      "require": "./lib/isBoolean.js"
+      "import": "./isBoolean.js",
+      "require": "./isBoolean.js",
+      "types": "./isBoolean.d.ts"
     },
     "./isString": {
-      "import": "./lib/isString.js",
-      "require": "./lib/isString.js"
+      "import": "./isString.js",
+      "require": "./isString.js",
+      "types": "./isString.d.ts"
     },
     "./isDate": {
-      "import": "./lib/isDate.js",
-      "require": "./lib/isDate.js"
+      "import": "./isDate.js",
+      "require": "./isDate.js",
+      "types": "./isDate.d.ts"
     },
     "./isRegex": {
-      "import": "./lib/isRegex.js",
-      "require": "./lib/isRegex.js"
+      "import": "./isRegex.js",
+      "require": "./isRegex.js",
+      "types": "./isRegex.d.ts"
     },
     "./isFunction": {
-      "import": "./lib/isFunction.js",
-      "require": "./lib/isFunction.js"
+      "import": "./isFunction.js",
+      "require": "./isFunction.js",
+      "types": "./isFunction.d.ts"
     },
     "./isPrimitive": {
-      "import": "./lib/isPrimitive.js",
-      "require": "./lib/isPrimitive.js"
-    },
-    "./json-storage-formatter.types": {
-      "import": "./lib/json-storage-formatter.types.js",
-      "require": "./lib/json-storage-formatter.types.js"
+      "import": "./isPrimitive.js",
+      "require": "./isPrimitive.js",
+      "types": "./isPrimitive.d.ts"
     },
     "./formatFromStore": {
-      "import": "./lib/formatFromStore.js",
-      "require": "./lib/formatFromStore.js"
+      "import": "./formatFromStore.js",
+      "require": "./formatFromStore.js",
+      "types": "./formatFromStore.d.ts"
     },
     "./formatToStore": {
-      "import": "./lib/formatToStore.js",
-      "require": "./lib/formatToStore.js"
+      "import": "./formatToStore.js",
+      "require": "./formatToStore.js",
+      "types": "./formatToStore.d.ts"
     }
   },
-  "files": [
-    "lib"
+ "files": [
+    "./*.js",
+    "./*.d.ts"
   ],
   "scripts": {
     "test:debug": "node --inspect-brk node_modules/.bin/jest --watch --runInBand",

@@ -2,9 +2,12 @@
   "compilerOptions": {
     "target": "ES2016",
     "module": "commonjs",
-    "lib": ["es2016", "dom"],
+    "lib": [
+      "es2016",
+      "dom"
+    ],
     "declaration": true,
-    "outDir": "./lib",
+    "outDir": "./",
     "strict": true,
     "noImplicitAny": false,
     "strictNullChecks": false,
@@ -22,14 +25,25 @@
     "downlevelIteration": true,
     "sourceMap": true,
     "allowJs": true,
-    "declarationDir": "./lib",
-    "typeRoots": ["node_modules/@types", "./types"],
+    "declarationDir": "./",
+    "typeRoots": [
+      "node_modules/@types",
+      "./types"
+    ],
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
-      "*": ["src/*"]
+      "*": [
+        "src/*"
+      ]
     }
   },
-  "include": ["src/**/*", "types/**/*"],
-  "exclude": ["node_modules", "lib"]
+  "include": [
+    "src/**/*",
+    "types/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "lib"
+  ]
 }

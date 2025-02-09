@@ -128,3 +128,5 @@ dist
 .pnp.*
 
 lib
+*.js
+*.d.ts

@@ -18,7 +18,7 @@ module.exports = {
     formatToStore: "./src/formatToStore.ts",
   },
   output: {
-    path: path.resolve(__dirname, 'lib'),
+    path: path.resolve(__dirname),//'lib'
     filename: ({ chunk: { name } }) => {
       if (name.includes('worker')) {
         return `${name}.worker.js`;
