@@ -1,9 +1,25 @@
 {
   "name": "json-storage-formatter",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Package for json stringify objects without losing data types",
   "main": "lib/bundle.js",
   "types": "lib/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "clone": ["./lib/clone.d.ts"],
+      "isNil": ["./lib/isNil.d.ts"],
+      "isNumber": ["./lib/isNumber.d.ts"],
+      "isBoolean": ["./lib/isBoolean.d.ts"],
+      "isString": ["./lib/isString.d.ts"],
+      "isDate": ["./lib/isDate.d.ts"],
+      "isRegex": ["./lib/isRegex.d.ts"],
+      "isFunction": ["./lib/isFunction.d.ts"],
+      "isPrimitive": ["./lib/isPrimitive.d.ts"],
+      "types": ["./lib/types.d.ts"],
+      "formatFromStore": ["./lib/formatFromStore.d.ts"],
+      "formatToStore": ["./lib/formatToStore.d.ts"]
+    }
+  },
   "module": "lib/index.js",
   "sideEffects": false,
   "exports": {
