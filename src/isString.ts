@@ -1,4 +1,3 @@
-
 /**
  * Check if a value is a string
  * @param value
@@ -6,4 +5,6 @@
  * true if the value is a string
  * false otherwise
  * */
-export const isString = (value: unknown): value is string => typeof value === 'string';
+const isString = (value: unknown): value is string => typeof value === 'string';
+
+export default isString;

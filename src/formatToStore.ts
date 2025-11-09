@@ -1,60 +1,55 @@
-import { clone } from "./clone";
-import { isDate } from "./isDate";
-import { isFunction } from "./isFunction";
-import { isPrimitive } from "./isPrimitive";
-import { isRegex } from "./isRegex";
-import { IValueWithMetaData, TPrimitives } from "./types";
+import isDate from './isDate';
+import isFunction from './isFunction';
+import isPrimitive from './isPrimitive';
+import isRegex from './isRegex';
+import type { EnvelopData, Primitives } from './types';
 
 /**
- * Add metadata to a value to store it as json, it also supports Map, Set, Arrays,
- * Returns a new object which is a clone of the original object with metadata
- * @template {TValue} The type of the value to format
- * @template {TStringify} If the value should be stringified
- * @param {TValue} value The value to format
- * @param {{ stringify: TStringify }} { stringify: boolean } If the value should be stringified
+ * Formats an object to be stored, it adds metadata to preserve data types
+ * Compatible with Map, Set, Date, RegExp, Function, Error
+ * * @param value The value to format
+ * @param options Formatting options
+ * @param options.excludeTypes An array or set of primitive types to exclude from the stringified version
+ * @param options.excludeKeys An array or set of keys to exclude from the stringified version
+ * @param options.sortKeys If true, it will sort the keys of the object alphabetically, or a function to sort the keys,
+ * This helps to guarantee a consistent order of the keys in the stringified version
+ * @param options.validator Returns true if the value should be included in the stringified version,
+ * if provided it will override the default validator and the excludesTypes and excludeKeys
+ * @returns A stringified version of the object with metadata
  */
-export const formatToStore = <TValue, TStringify extends true | false = false>(
-  value: TValue,
-  {
-    stringify,
-    validator,
-    excludeTypes,
-    excludeKeys,
-    sortKeys,
-  }: {
-    stringify?: TStringify;
-    excludeTypes?: TPrimitives[] | Set<TPrimitives>;
+const formatToStore = <T>(
+  value: T,
+  options: {
+    /**
+     * If true, it will return a stringified version of the object
+     */
+    excludeTypes?: Primitives[] | Set<Primitives>;
+
+    /**
+     * An array or set of keys to exclude from the stringified version
+     */
     excludeKeys?: string[] | Set<string>;
+
+    /**
+     * If true, it will sort the keys of the object alphabetically, or a function to sort the keys,
+     * This helps to guarantee a consistent order of the keys in the stringified version
+     */
     sortKeys?: boolean | ((a: string, b: string) => number);
+
     /**
      * Returns true if the value should be included in the stringified version,
      * if provided it will override the default validator and the excludesTypes and excludeKeys
      */
-    validator?: ({
-      obj,
-      key,
-      value,
-    }: {
-      obj: unknown;
-      key: string;
-      value: unknown;
-    }) => boolean | undefined;
-  } = { stringify: false as TStringify }
-): TStringify extends true ? string : unknown => {
-  const $excludesTypes = new Set(excludeTypes ?? []);
-  const $excludeKeys = new Set(excludeKeys ?? []);
+    validator?: ({ obj, key, value }: { obj: unknown; key: string; value: unknown }) => boolean | undefined;
+  } = {},
+): string => {
+  const $excludesTypes = new Set(options.excludeTypes ?? []);
+  const $excludeKeys = new Set(options.excludeKeys ?? []);
   const hasDefaultValidator = $excludesTypes.size || $excludeKeys.size;
 
   const $validator =
-    validator ??
-    (({
-      key,
-      value: $value,
-    }: {
-      obj: unknown;
-      key: string;
-      value: unknown;
-    }): boolean => {
+    options.validator ??
+    (({ key, value: $value }: { obj: unknown; key: string; value: unknown }): boolean => {
       if (!hasDefaultValidator) return true;
 
       const isExcludedKey = $excludeKeys.has(key);
@@ -63,124 +58,129 @@ export const formatToStore = <TValue, TStringify extends true | false = false>(
       return !isExcludedKey && !isExcludedType;
     });
 
-  const format = <T>(obj: T): unknown => {
-    if (isPrimitive(obj)) {
-      return obj;
+  const format = <T>(value$: T): unknown => {
+    if (value$ === undefined) {
+      return {
+        $t: 'undefined',
+      };
     }
 
-    const isArray = Array.isArray(obj);
+    if (isPrimitive(value$)) {
+      return value$;
+    }
+
+    const isArray = Array.isArray(value$);
 
     if (isArray) {
-      return (obj as unknown as Array<unknown>).map((item) => format(item));
+      return (value$ as unknown as Array<unknown>).map((item) => format(item));
     }
 
-    const isMap = obj instanceof Map;
+    const isMap = value$ instanceof Map;
 
     if (isMap) {
-      const pairs = Array.from((obj as Map<unknown, unknown>).entries());
+      const pairs = Array.from((value$ as Map<unknown, unknown>).entries());
 
-      const value: IValueWithMetaData = {
+      const envelop: EnvelopData = {
         $t: 'map',
         $v: pairs.map((pair) => format(pair)),
       };
 
-      return value;
+      return envelop;
     }
 
-    const isSet = obj instanceof Set;
+    const isSet = value$ instanceof Set;
 
     if (isSet) {
-      const values = Array.from((obj as Set<unknown>).values());
-
-      const value: IValueWithMetaData = {
+      const envelop: EnvelopData = {
         $t: 'set',
-        $v: values.map((item) => format(item)),
+        $v: Array.from((value$ as Set<unknown>).values()).map((item) => format(item)),
       };
 
-      return value;
+      return envelop;
     }
 
-    if (isDate(obj)) {
-      const value: IValueWithMetaData = {
+    if (isDate(value$)) {
+      const envelop: EnvelopData = {
         $t: 'date',
-        $v: (obj as Date).toISOString(),
+        $v: (value$ as Date).toISOString(),
       };
 
-      return value;
+      return envelop;
     }
 
-    if (isRegex(obj)) {
-      const value: IValueWithMetaData = {
+    if (isRegex(value$)) {
+      const envelop: EnvelopData = {
         $t: 'regex',
-        $v: (obj as RegExp).toString(),
+        $v: {
+          s: value$.source,
+          f: value$.flags,
+        },
       };
 
-      return value;
+      return envelop;
     }
 
-    if (isFunction(obj)) {
-      let value: IValueWithMetaData;
+    if (isFunction(value$)) {
+      let envelop: EnvelopData;
 
       try {
-        value = {
+        envelop = {
           $t: 'function',
-          $v: obj.toString(),
+          $v: value$.toString(),
         };
       } catch (error) {
-        value = {
+        envelop = {
           $t: 'error',
-          $v: 'Error: Could not serialize function',
+          $v: `Could not serialize function: ${(error as Error)?.message}`,
         };
       }
 
-      return value;
+      return envelop;
     }
 
-    const isError = obj instanceof Error;
+    const isError = value$ instanceof Error;
 
     if (isError) {
-      const value: IValueWithMetaData = {
+      const envelop: EnvelopData = {
         $t: 'error',
-        $v: (obj as Error).message,
+        $v: (value$ as Error).message,
       };
 
-      return value;
+      return envelop;
     }
 
     const keys = (() => {
-      const _keys = Object.keys(obj as Record<string, unknown>);
+      const _keys = Object.keys(value$ as Record<string, unknown>);
 
-      if (!sortKeys) return _keys;
+      if (!options.sortKeys) return _keys;
 
-      if (isFunction(sortKeys))
-        return _keys.sort(sortKeys as (a: string, b: string) => number);
+      if (isFunction(options.sortKeys))
+        return _keys.sort(options.sortKeys as (a: string, b: string) => number);
 
-      return _keys.sort((a, b) => (a ?? '').localeCompare(b));
+      return _keys.sort((a, b) => a.localeCompare(b));
     })();
 
     return keys.reduce((accumulator, key) => {
-      const prop = obj[key as keyof T];
-      const propValue = format(prop);
+      const propValue = value$[key as keyof T];
+      const formattedPropValue = format(propValue);
       const shouldInclude = $validator({
-        obj,
+        obj: value$,
         key,
-        value: propValue,
+        value: formattedPropValue,
       });
 
       if (!shouldInclude) return accumulator;
 
       return {
         ...accumulator,
-        [key]: format(prop),
+        [key]: format(propValue),
       };
     }, {});
   };
 
-  const objectWithMetadata = format(clone(value));
+  const objectWithMetadata = format(value);
 
-  const result = stringify
-    ? JSON.stringify(objectWithMetadata)
-    : objectWithMetadata;
-
-  return result as TStringify extends true ? string : unknown;
+  return JSON.stringify(objectWithMetadata);
 };
+
+export default formatToStore;

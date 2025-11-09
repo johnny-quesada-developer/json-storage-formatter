@@ -1,4 +1,3 @@
-
 /**
  * Check if a value is a number
  * @param value
@@ -6,4 +5,6 @@
  *  true if the value is a number
  * false otherwise
  *  */
-export const isNumber = (value: unknown): value is number => typeof value === 'number';
+const isNumber = (value: unknown): value is number => typeof value === 'number';
+
+export default isNumber;

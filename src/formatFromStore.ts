@@ -1,7 +1,6 @@
-import { clone } from "./clone";
-import { isFunction } from "./isFunction";
-import { isPrimitive } from "./isPrimitive";
-import { IValueWithMetaData } from "./types";
+import isString from './isString';
+import isPrimitive from './isPrimitive';
+import type { EnvelopData } from './types';
 
 /**
  * Format an value with possible metadata to his original form, it also supports Map, Set, Arrays
@@ -9,20 +8,18 @@ import { IValueWithMetaData } from "./types";
  * @returns
  * Original form of the value
  */
-export const formatFromStore = <T = unknown>(
-  value: unknown,
-  {
-    jsonParse,
-    sortKeys,
-  }: {
-    /** If the value should be parsed from json before formatting */
-    jsonParse?: boolean;
-    sortKeys?: boolean | ((a: string, b: string) => number);
-  } = {}
-): T => {
-  const format = (obj: T & IValueWithMetaData): unknown => {
-    if (isPrimitive(obj)) {
+const formatFromStore = <T = unknown>(value: string): T => {
+  if (!isString(value)) return value as T;
+
+  const format = (obj: unknown): unknown => {
+    if (!isObject(obj)) {
       return obj;
+    }
+
+    const isMetaUndefined = obj?.$t === 'undefined';
+
+    if (isMetaUndefined) {
+      return undefined;
     }
 
     const isMetaDate = obj?.$t === 'date';
@@ -34,9 +31,9 @@ export const formatFromStore = <T = unknown>(
     const isMetaMap = obj?.$t === 'map';
 
     if (isMetaMap) {
-      const mapData: [string, unknown][] = (
-        ((obj.$v as []) ?? []) as [string, unknown][]
-      ).map(([key, item]) => [key, formatFromStore(item)]);
+      const mapData: [string, unknown][] = (((obj.$v as []) ?? []) as [string, unknown][]).map(
+        ([key, item]) => [key, format(item)],
+      );
 
       return new Map(mapData);
     }
@@ -44,8 +41,9 @@ export const formatFromStore = <T = unknown>(
     const isMetaSet = obj?.$t === 'set';
 
     if (isMetaSet) {
-      const setData: unknown[] =
-        (obj.$v as []) ?? [].map((item) => formatFromStore(item));
+      const setData: unknown[] = ((obj.$v as []) ?? []).map((item) => {
+        return format(item);
+      });
 
       return new Set(setData);
     }
@@ -53,7 +51,9 @@ export const formatFromStore = <T = unknown>(
     const isMetaReg = obj?.$t === 'regex';
 
     if (isMetaReg) {
-      return new RegExp(obj.$v as string);
+      const envelop = obj.$v as { s: string; f: string };
+
+      return new RegExp(envelop.s, envelop.f);
     }
 
     const isMetaError = obj?.$t === 'error';
@@ -65,9 +65,7 @@ export const formatFromStore = <T = unknown>(
     const isArray = Array.isArray(obj);
 
     if (isArray) {
-      return (obj as unknown as Array<unknown>).map((item) =>
-        formatFromStore(item)
-      );
+      return (obj as unknown as Array<unknown>).map((item) => format(item));
     }
 
     const isMetaFunction = obj?.$t === 'function';
@@ -77,33 +75,23 @@ export const formatFromStore = <T = unknown>(
       return Function(`(${obj.$v})(...arguments)`);
     }
 
-    const keys = (() => {
-      const _keys = Object.keys(obj as Record<string, unknown>);
-
-      if (!sortKeys) return _keys;
-
-      if (isFunction(sortKeys))
-        return _keys.sort(sortKeys as (a: string, b: string) => number);
-
-      return _keys.sort((a, b) => (a ?? '').localeCompare(b));
-    })();
+    const keys = Object.keys(obj as Record<string, unknown>);
 
     return keys.reduce((accumulator, key) => {
-      const unformattedValue: unknown = obj[key as keyof T];
+      const unformattedValue = obj[key];
 
       return {
         ...accumulator,
-        [key]: formatFromStore(unformattedValue),
+        [key]: format(unformattedValue),
       };
     }, {});
   };
 
-  const value$ = jsonParse
-    ? JSON.parse(value as string)
-    : clone(value as T & IValueWithMetaData);
-
-  return format(value$) as T;
+  return format(JSON.parse(value)) as T;
 };
 
+const isObject = (value: unknown): value is Record<string, unknown> & Partial<EnvelopData> => {
+  return !isPrimitive(value);
+};
 
-
+export default formatFromStore;

@@ -1,14 +1,11 @@
-export { clone } from "./clone";
-export { isNil } from "./isNil";
-export { isNumber } from "./isNumber";
-export { isBoolean } from "./isBoolean";
-export { isString } from "./isString";
-export { isDate } from "./isDate";
-export { isRegex } from "./isRegex";
-export { isFunction } from "./isFunction";
-export { isPrimitive } from "./isPrimitive";
-export { TPrimitives, IValueWithMetaData } from "./types";
-export { formatFromStore } from "./formatFromStore";
-export { formatToStore } from "./formatToStore";
-
-
+export { default as isNil } from './isNil';
+export { default as isNumber } from './isNumber';
+export { default as isBoolean } from './isBoolean';
+export { default as isString } from './isString';
+export { default as isDate } from './isDate';
+export { default as isRegex } from './isRegex';
+export { default as isFunction } from './isFunction';
+export { default as isPrimitive } from './isPrimitive';
+export { default as formatFromStore } from './formatFromStore';
+export { default as formatToStore } from './formatToStore';
+export type { Primitives, EnvelopData } from './types';

@@ -1,3 +1,15 @@
+// import {
+//   isBoolean,
+//   isDate,
+//   isNil,
+//   isNumber,
+//   isPrimitive,
+//   isString,
+//   formatFromStore,
+//   formatToStore,
+//   EnvelopData,
+// } from '../';
+
 import {
   isBoolean,
   isDate,
@@ -7,8 +19,7 @@ import {
   isString,
   formatFromStore,
   formatToStore,
-  IValueWithMetaData,
-  clone,
+  EnvelopData,
 } from '../src';
 
 describe('isBoolean', () => {
@@ -130,155 +141,89 @@ describe('isString', () => {
   });
 });
 
-describe('clone', () => {
-  it('should return a clone of the object', () => {
-    const obj = {
-      a: 1,
-      b: '2',
-      c: true,
-      d: new Date(),
-      e: null,
-      f: undefined,
-      g: {
-        h: 3,
-        i: '4',
-        j: false,
-        k: new Date(),
-        array: [1, 2, 3],
-        map: new Map([
-          ['a', 1],
-          ['b', 2],
-          ['c', 3],
-        ]),
-      },
-    };
-
-    const cloned = clone(obj);
-
-    expect(cloned).toEqual(obj);
-    expect(cloned).not.toBe(obj);
-
-    expect(cloned.g.array).toEqual(obj.g.array);
-    expect(cloned.g.array).not.toBe(obj.g.array);
-    expect(cloned.g.map).toEqual(obj.g.map);
-    expect(cloned.g.map).not.toBe(obj.g.map);
-  });
-
-  it('should return a shallow clone of the object', () => {
-    const obj = {
-      a: 1,
-      b: '2',
-      c: true,
-      d: new Date(),
-      e: null,
-      f: undefined,
-      g: {
-        h: 3,
-        i: '4',
-        j: false,
-        k: new Date(),
-        array: [1, 2, 3],
-        map: new Map([
-          ['a', 1],
-          ['b', 2],
-          ['c', 3],
-        ]),
-      },
-    };
-
-    const cloned = clone(obj, { shallow: true });
-
-    expect(cloned).toEqual(obj);
-    expect(cloned).not.toBe(obj);
-
-    expect(cloned.g.array).toEqual(obj.g.array);
-    expect(cloned.g.array).toBe(obj.g.array);
-    expect(cloned.g.map).toEqual(obj.g.map);
-    expect(cloned.g.map).toBe(obj.g.map);
-  });
-});
-
 describe('formatFromStore', () => {
-  it('should return the original value if it is not a string', () => {
-    expect(formatFromStore({})).toEqual({});
-    expect(formatFromStore([])).toEqual([]);
-    expect(formatFromStore(1)).toEqual(1);
-    expect(formatFromStore(0)).toEqual(0);
-    expect(formatFromStore(null)).toEqual(null);
-    expect(formatFromStore(undefined)).toEqual(undefined);
-    expect(formatFromStore(true)).toEqual(true);
-    expect(formatFromStore(false)).toEqual(false);
+  it('should correctly restore the value to its original form', () => {
+    // simple values
+    expect(formatFromStore('{}')).toEqual({});
+    expect(formatFromStore('[]')).toEqual([]);
+    expect(formatFromStore('1')).toEqual(1);
+    expect(formatFromStore('0')).toEqual(0);
+    expect(formatFromStore('null')).toEqual(null);
+    expect(formatFromStore(JSON.stringify({ $t: 'undefined' }))).toEqual(undefined);
+    expect(formatFromStore('true')).toEqual(true);
+    expect(formatFromStore('false')).toEqual(false);
 
-    const value: IValueWithMetaData = {
+    // dates
+    const date = new Date('2020-01-01T00:00:00.000Z');
+
+    const value: EnvelopData = {
       $t: 'date',
-      $v: '2020-01-01T00:00:00.000Z',
+      $v: date.toISOString(),
     };
 
-    expect(formatFromStore(value)).toEqual(
-      new Date('2020-01-01T00:00:00.000Z')
-    );
+    const valueStr = JSON.stringify(value);
+
+    expect(formatFromStore(valueStr)).toEqual(date);
   });
 
-  it('should return string when string is input', () => {
-    expect(formatFromStore('{}')).toEqual('{}');
-    expect(formatFromStore('[]')).toEqual('[]');
-    expect(formatFromStore('1')).toEqual('1');
-    expect(formatFromStore('0')).toEqual('0');
-    expect(formatFromStore('null')).toEqual('null');
-    expect(formatFromStore('undefined')).toEqual('undefined');
-    expect(formatFromStore('true')).toEqual('true');
-    expect(formatFromStore('false')).toEqual('false');
+  it('should return the proper parsed value', () => {
+    expect(formatFromStore('{}')).toEqual({});
+    expect(formatFromStore('[]')).toEqual([]);
+    expect(formatFromStore('1')).toEqual(1);
+    expect(formatFromStore('0')).toEqual(0);
+    expect(formatFromStore('null')).toEqual(null);
+    expect(formatFromStore(JSON.stringify({ $t: 'undefined' }))).toEqual(undefined);
+    expect(formatFromStore('true')).toEqual(true);
+    expect(formatFromStore('false')).toEqual(false);
   });
 
-  const value: IValueWithMetaData = {
+  const value: EnvelopData = {
     $v: '2020-01-01T00:00:00.000Z',
     $t: 'date',
   };
 
   it('should return the parsed value if it is a valid JSON string', () => {
-    expect(formatFromStore(value)).toEqual(
-      new Date('2020-01-01T00:00:00.000Z')
-    );
+    expect(formatFromStore(JSON.stringify(value))).toEqual(new Date('2020-01-01T00:00:00.000Z'));
   });
 });
 
 describe('formatToStore', () => {
   it('should return the original value if it is not a primitive', () => {
     const obj = {};
-    expect(formatToStore(obj)).toEqual(obj);
+    expect(formatToStore(obj)).toEqual(JSON.stringify(obj));
 
     const arr: unknown[] = [];
-    expect(formatToStore(arr)).toEqual(arr);
+    expect(formatToStore(arr)).toEqual(JSON.stringify(arr));
 
-    const value: IValueWithMetaData = {
+    const value: EnvelopData = {
       $t: 'date',
       $v: '2022-12-13T23:35:30.675Z',
     };
 
-    expect(formatToStore(new Date('2022-12-13T23:35:30.675Z'))).toEqual(value);
+    expect(formatToStore(new Date('2022-12-13T23:35:30.675Z'))).toEqual(JSON.stringify(value));
   });
 
   it('should return the stringified value if it is a primitive', () => {
-    expect(formatToStore(1)).toEqual(1);
-    expect(formatToStore(0)).toEqual(0);
-    expect(formatToStore('')).toEqual('');
-    expect(formatToStore('true')).toEqual('true');
-    expect(formatToStore('false')).toEqual('false');
-    expect(formatToStore(null)).toEqual(null);
-    expect(formatToStore(undefined)).toEqual(undefined);
-    expect(formatToStore(true)).toEqual(true);
-    expect(formatToStore(false)).toEqual(false);
+    expect(formatToStore(1)).toEqual(JSON.stringify(1));
+    expect(formatToStore(0)).toEqual(JSON.stringify(0));
+    expect(formatToStore('')).toEqual(JSON.stringify(''));
+    expect(formatToStore('true')).toEqual(JSON.stringify('true'));
+    expect(formatToStore('false')).toEqual(JSON.stringify('false'));
+    expect(formatToStore(null)).toEqual(JSON.stringify(null));
+    expect(formatToStore(undefined)).toEqual(JSON.stringify({ $t: 'undefined' }));
+    expect(formatToStore(true)).toEqual(JSON.stringify(true));
+    expect(formatToStore(false)).toEqual(JSON.stringify(false));
   });
 
   it('should return the stringified the stringify parameter is true', () => {
-    expect(formatToStore(1, { stringify: true })).toEqual('1');
-    expect(formatToStore(0, { stringify: true })).toEqual('0');
-    expect(formatToStore('', { stringify: true })).toEqual('""');
-    expect(formatToStore('true', { stringify: true })).toEqual('"true"');
-    expect(formatToStore('false', { stringify: true })).toEqual('"false"');
-    expect(formatToStore(null, { stringify: true })).toEqual('null');
-    expect(formatToStore(true, { stringify: true })).toEqual('true');
-    expect(formatToStore(false, { stringify: true })).toEqual('false');
+    expect(formatToStore(1)).toEqual('1');
+    expect(formatToStore(0)).toEqual('0');
+    expect(formatToStore('')).toEqual('""');
+    expect(formatToStore('true')).toEqual('"true"');
+    expect(formatToStore('false')).toEqual('"false"');
+    expect(formatToStore(null)).toEqual('null');
+    expect(formatToStore(true)).toEqual('true');
+    expect(formatToStore(false)).toEqual('false');
   });
 
   it('should avoid adding the object keys if the excludeKeys parameter is provided', () => {
@@ -292,10 +237,12 @@ describe('formatToStore', () => {
 
     const formatted = formatToStore(obj, { excludeKeys: ['a', 'b'] });
 
-    expect(formatted).toEqual({
+    expect(JSON.parse(formatted)).toEqual({
       c: true,
       e: null,
-      f: undefined,
+      f: {
+        $t: 'undefined',
+      },
     });
   });
 
@@ -313,10 +260,9 @@ describe('formatToStore', () => {
       excludeTypes: ['number', 'object'],
     });
 
-    expect(formatted).toEqual({
+    expect(JSON.parse(formatted)).toEqual({
       b: '2',
       c: true,
-      f: undefined,
     });
   });
 
@@ -332,10 +278,82 @@ describe('formatToStore', () => {
       validator: ({ key }) => key !== 'b',
     });
 
-    expect(formatted).toEqual({
+    expect(JSON.parse(formatted)).toEqual({
       a: 1,
       c: true,
-      f: undefined,
+      f: {
+        $t: 'undefined',
+      },
     });
+  });
+
+  it('should properly handle complex nested objects', () => {
+    const primitives = {
+      bool: true,
+      date: new Date('2020-01-01T00:00:00.000Z'),
+      null: null,
+      num: 1,
+      zero: 0,
+      negative: -1,
+      str: 'string',
+      undef: undefined,
+      regex: new RegExp('^test$', 'i'),
+      error: new Error('Test error'),
+      emptyString: '',
+      undefString: 'undefined',
+      nullString: 'null',
+      emptyArr: [],
+      emptySet: new Set(),
+      emptyMap: new Map(),
+      emptyObj: {},
+    };
+
+    const array = Object.values(primitives);
+    const set = new Set(Object.values(primitives));
+    const map = new Map(Object.entries(primitives));
+    const numericMap = new Map(Object.entries(primitives).map(([, value], index) => [index, value]));
+    const objectMap = new Map(
+      Object.entries(primitives).map(([key, value]) => [
+        {
+          key,
+        },
+        {
+          value,
+        },
+      ]),
+    );
+
+    const collections = {
+      array,
+      set,
+      map,
+      numericMap,
+      objectMap,
+    };
+
+    const obj = {
+      ...primitives,
+      ...collections,
+      nested: {
+        ...primitives,
+        ...collections,
+        nestedOnArray: [{ ...primitives }, [...array], new Set(set), new Map(map)],
+        nestedOnSet: new Set([{ ...primitives }, [...array], new Set(set), new Map(map)]),
+        nestedOnMap: new Map<string, unknown>([
+          ['primitives', { ...primitives }],
+          ['array', [...array]],
+          ['set', new Set(set)],
+          ['map', new Map(map)],
+        ]),
+      },
+    };
+
+    const valueToStore = formatToStore(obj, {
+      sortKeys: true,
+    });
+
+    const result = formatFromStore(valueToStore) as typeof obj;
+
+    expect(obj).toEqual(result);
   });
 });
