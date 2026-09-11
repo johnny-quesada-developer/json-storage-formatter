@@ -8,7 +8,7 @@ import type { EnvelopData } from './types';
  * @returns
  * Original form of the value
  */
-const formatFromStore = <T = unknown>(value: string): T => {
+export const formatFromStore = <T = unknown>(value: string): T => {
   if (!isString(value)) return value as T;
 
   const format = (obj: unknown): unknown => {

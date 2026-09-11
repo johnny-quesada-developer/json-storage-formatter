@@ -1,11 +1,37 @@
-export { default as isNil } from './isNil';
-export { default as isNumber } from './isNumber';
-export { default as isBoolean } from './isBoolean';
-export { default as isString } from './isString';
-export { default as isDate } from './isDate';
-export { default as isRegex } from './isRegex';
-export { default as isFunction } from './isFunction';
-export { default as isPrimitive } from './isPrimitive';
-export { default as formatFromStore } from './formatFromStore';
-export { default as formatToStore } from './formatToStore';
+export { isNil } from './isNil';
+export { isNumber } from './isNumber';
+export { isBoolean } from './isBoolean';
+export { isString } from './isString';
+export { isDate } from './isDate';
+export { isRegex } from './isRegex';
+export { isFunction } from './isFunction';
+export { isPrimitive } from './isPrimitive';
+export { formatFromStore } from './formatFromStore';
+export { formatToStore } from './formatToStore';
 export type { Primitives, EnvelopData } from './types';
+
+import { isNil } from './isNil';
+import { isNumber } from './isNumber';
+import { isBoolean } from './isBoolean';
+import { isString } from './isString';
+import { isDate } from './isDate';
+import { isRegex } from './isRegex';
+import { isFunction } from './isFunction';
+import { isPrimitive } from './isPrimitive';
+import { formatFromStore } from './formatFromStore';
+import { formatToStore } from './formatToStore';
+
+const jsonStorageFormatter = {
+  isNil,
+  isNumber,
+  isBoolean,
+  isString,
+  isDate,
+  isRegex,
+  isFunction,
+  isPrimitive,
+  formatFromStore,
+  formatToStore,
+};
+
+export default jsonStorageFormatter;

@@ -17,7 +17,7 @@ import type { EnvelopData, Primitives } from './types';
  * if provided it will override the default validator and the excludesTypes and excludeKeys
  * @returns A stringified version of the object with metadata
  */
-const formatToStore = <T>(
+export const formatToStore = <T>(
   value: T,
   options: {
     /**

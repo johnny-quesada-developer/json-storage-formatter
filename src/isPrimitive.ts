@@ -11,7 +11,7 @@ import isString from './isString';
  * false otherwise
  * null, number, boolean, string, symbol
  */
-const isPrimitive = (value: unknown): value is null | number | boolean | string | symbol =>
+export const isPrimitive = (value: unknown): value is null | number | boolean | string | symbol =>
   isNil(value) || isNumber(value) || isBoolean(value) || isString(value) || typeof value === 'symbol';
 
 export default isPrimitive;

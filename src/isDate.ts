@@ -4,6 +4,6 @@
  * true if the value is a Date
  * false otherwise
  */
-const isDate = (value: unknown): value is Date => value instanceof Date;
+export const isDate = (value: unknown): value is Date => value instanceof Date;
 
 export default isDate;
