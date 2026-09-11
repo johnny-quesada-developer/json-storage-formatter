@@ -1,6 +1,6 @@
 {
   "name": "json-storage-formatter",
-  "version": "4.0.0-beta",
+  "version": "4.0.0",
   "description": "Package for json stringify objects without losing data types",
   "main": "./bundle.js",
   "module": "./bundle.mjs",
